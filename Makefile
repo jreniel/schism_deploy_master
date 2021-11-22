@@ -11,6 +11,22 @@ default:
 	-DNetCDF_C_LIBRARY=$$(nc-config --prefix)/lib/libnetcdf.so;\
 	make -j$$(nproc)
 
+modulefiles:
+	@set -e;\
+	PREFIX=$${HOME}/.local/Modules/modulefiles/schism;\
+	mkdir -p $${PREFIX};\
+	echo '#%Module1.0' > $${PREFIX}/master;\
+	echo '#' >> $${PREFIX}/master;\
+	echo '# SCHISM master tag' >> $${PREFIX}/master;\
+	echo '#' >> $${PREFIX}/master;\
+	echo '' >> $${PREFIX}/master;\
+	echo 'proc ModulesHelp { } {' >> $${PREFIX}/master;\
+	echo "puts stderr \"SCHISM loading from master branch from a local compile @ $${INSTALL_PATH}.\"" >> $${PREFIX}/master;\
+	echo '}' >> $${PREFIX}/master;\
+	echo "prepend-path PATH {${MAKEFILE_PARENT}/bin}" >> $${PREFIX}/master
+
+
+
 sciclone:
 	@set -e;\
 	source /usr/local/Modules/default/init/sh;\
