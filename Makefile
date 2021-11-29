@@ -56,6 +56,7 @@ modulefiles:
 sciclone:
 	@set -e;\
 	source /usr/local/Modules/default/init/sh;\
+	module purge;\
 	module load intel/2018 intel/2018-mpi netcdf/4.4.1.1/intel-2018 netcdf-fortran/4.4.4/intel-2018 cmake;\
 	make --no-print-directory;\
 	mkdir -p ${DESTDIR};\
