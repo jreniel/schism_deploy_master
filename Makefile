@@ -58,6 +58,8 @@ sciclone:
 	source /usr/local/Modules/default/init/sh;\
 	module load intel/2018 intel/2018-mpi netcdf/4.4.1.1/intel-2018 netcdf-fortran/4.4.4/intel-2018 cmake;\
 	make --no-print-directory;\
+	mkdir -p ${DESTDIR};\
+	cp -r build/bin ${DESTDIR}/;\
 	prefix=$${HOME}/.local/Modules/modulefiles/schism/;\
 	mkdir -p $${prefix};\
 	modulefile=$${prefix}/${BRANCH};\
@@ -67,14 +69,13 @@ sciclone:
 	echo '#' >> $${modulefile};\
 	echo '' >> $${modulefile};\
 	echo 'proc ModulesHelp { } {' >> $${modulefile};\
-	INSTALL_PATH=$$(realpath sciclone/bin);\
 	echo "puts stderr \"SCHISM loading from ${BRANCH} from a local compile @ ${DESTDIR}.\"" >> $${modulefile};\
 	echo '}' >> $${modulefile};\
 	echo 'if { [module-info mode load] && ![is-loaded intel/2018] } { module load intel/2018 }' >> $${modulefile};\
 	echo 'if { [module-info mode load] && ![is-loaded intel/2018-mpi] } { module load intel/2018-mpi }' >> $${modulefile};\
 	echo 'if { [module-info mode load] && ![is-loaded netcdf/4.4.1.1/intel-2018] } { module load netcdf/4.4.1.1/intel-2018 }' >> $${modulefile};\
 	echo 'if { [module-info mode load] && ![is-loaded netcdf-fortran/4.4.4/intel-2018] } { module load netcdf-fortran/4.4.4/intel-2018 }' >> $${modulefile};\
-	echo "prepend-path PATH {${DESTDIR}}" >> $${modulefile}
+	echo "prepend-path PATH {${DESTDIR}/bin}" >> $${modulefile}
 
 clean:
 	rm -rf ${MAKEFILE_PARENT}build
