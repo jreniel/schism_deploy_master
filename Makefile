@@ -1,29 +1,55 @@
+OLDIO=off
+BRANCH=master
+
+MAKEFILE_PATH:=$(abspath $(lastword $(MAKEFILE_LIST)))
+MAKEFILE_PARENT:=$(dir $(MAKEFILE_PATH))
+DESTDIR:=${HOME}/.local/share/schism/${BRANCH}
 
 default:
 	@set -e;\
+	mkdir build;\
 	rm -rf schism;\
 	git clone https://github.com/schism-dev/schism;\
-	mkdir build;\
-	cd build;\
-	cmake ../schism/src \
-	-DNetCDF_Fortran_LIBRARY=$$(nf-config --prefix)/lib/libnetcdff.so \
-	-DNetCDF_INCLUDE_DIRS=$$(nc-config --includedir) \
-	-DNetCDF_C_LIBRARY=$$(nc-config --prefix)/lib/libnetcdf.so;\
-	make -j$$(nproc)
+	if [ "${BRANCH}" != "master" ]; then\
+		pushd schism;\
+		git checkout ${BRANCH};\
+		popd;\
+	fi;\
+	NETCDF_C_PREFIX=$$(nc-config --prefix);\
+	NETCDF_F_PREFIX=$$(nf-config --prefix);\
+	opts+=("-DNetCDF_Fortran_LIBRARY=$${NETCDF_F_PREFIX}/lib/libnetcdff.so");\
+	opts+=("-DNetCDF_C_LIBRARY=$${NETCDF_C_PREFIX}/lib/libnetcdf.so");\
+	opts+=("-DNetCDF_INCLUDE_DIR=$${NETCDF_C_PREFIX}/include/");\
+	opts+=("-DOLDIO=${OLDIO}");\
+	pushd build;\
+	cmake ../schism/src; \
+	printf -v opts " %s" "$${opts[@]}";\
+	eval "cmake ../schism/src $${opts}";\
+	make -j $$(nproc) --no-print-directory
+
+install:
+	@set -e;\
+	mkdir -p ${DESTDIR};\
+	cp -r build/bin ${DESTDIR}/;\
+	if command -v module &> /dev/null; \
+	then \
+		make modulefiles --no-print-directory;\
+	fi
 
 modulefiles:
 	@set -e;\
-	PREFIX=$${HOME}/.local/Modules/modulefiles/schism;\
-	mkdir -p $${PREFIX};\
-	echo '#%Module1.0' > $${PREFIX}/master;\
-	echo '#' >> $${PREFIX}/master;\
-	echo '# SCHISM master tag' >> $${PREFIX}/master;\
-	echo '#' >> $${PREFIX}/master;\
-	echo '' >> $${PREFIX}/master;\
-	echo 'proc ModulesHelp { } {' >> $${PREFIX}/master;\
-	echo "puts stderr \"SCHISM loading from master branch from a local compile @ $${INSTALL_PATH}.\"" >> $${PREFIX}/master;\
-	echo '}' >> $${PREFIX}/master;\
-	echo "prepend-path PATH {${MAKEFILE_PARENT}/bin}" >> $${PREFIX}/master
+	prefix=$${HOME}/.local/Modules/modulefiles/schism;\
+	mkdir -p $${prefix};\
+	modulefile=$${prefix}/${BRANCH};\
+	echo '#%Module1.0' > $${modulefile};\
+	echo '#' >> $${modulefile};\
+	echo '# SCHISM ${BRANCH} tag' >> $${modulefile};\
+	echo '#' >> $${modulefile};\
+	echo '' >> $${modulefile};\
+	echo 'proc ModulesHelp { } {' >> $${modulefile};\
+	echo "puts stderr \"SCHISM loading from ${BRANCH} branch from a local compile @ ${DESTDIR}.\"" >> $${modulefile};\
+	echo '}' >> $${modulefile};\
+	echo "prepend-path PATH {${DESTDIR}/bin}" >> $${modulefile}
 
 
 
@@ -32,25 +58,26 @@ sciclone:
 	source /usr/local/Modules/default/init/sh;\
 	module load intel/2018 intel/2018-mpi netcdf/4.4.1.1/intel-2018 netcdf-fortran/4.4.4/intel-2018 cmake;\
 	make --no-print-directory;\
-	mkdir -p sciclone/modulefiles/schism;\
-	mv build/bin sciclone/bin;\
-	echo '#%Module1.0' > sciclone/modulefiles/schism/master;\
-	echo '#' >> sciclone/modulefiles/schism/master;\
-	echo '# SCHISM master tag' >> sciclone/modulefiles/schism/master;\
-	echo '#' >> sciclone/modulefiles/schism/master;\
-	echo '' >> sciclone/modulefiles/schism/master;\
-	echo 'proc ModulesHelp { } {' >> sciclone/modulefiles/schism/master;\
+	prefix=$${HOME}/.local/Modules/modulefiles/schism/;\
+	mkdir -p $${prefix};\
+	modulefile=$${prefix}/${BRANCH};\
+	echo '#%Module1.0' > $${modulefile};\
+	echo '#' >> $${modulefile};\
+	echo '# SCHISM ${BRANCH}' >> $${modulefile};\
+	echo '#' >> $${modulefile};\
+	echo '' >> $${modulefile};\
+	echo 'proc ModulesHelp { } {' >> $${modulefile};\
 	INSTALL_PATH=$$(realpath sciclone/bin);\
-	echo "puts stderr \"SCHISM loading from master branch from a local compile @ $${INSTALL_PATH}.\"" >> sciclone/modulefiles/schism/master;\
-	echo '}' >> sciclone/modulefiles/schism/master;\
-	echo 'if { [module-info mode load] && ![is-loaded intel/2018] } { module load intel/2018 }' >> sciclone/modulefiles/schism/master;\
-	echo 'if { [module-info mode load] && ![is-loaded intel/2018-mpi] } { module load intel/2018-mpi }' >> sciclone/modulefiles/schism/master;\
-	echo 'if { [module-info mode load] && ![is-loaded netcdf/4.4.1.1/intel-2018] } { module load netcdf/4.4.1.1/intel-2018 }' >> sciclone/modulefiles/schism/master;\
-	echo 'if { [module-info mode load] && ![is-loaded netcdf-fortran/4.4.4/intel-2018] } { module load netcdf-fortran/4.4.4/intel-2018 }' >> sciclone/modulefiles/schism/master;\
-	echo "prepend-path PATH {$${INSTALL_PATH}}" >> sciclone/modulefiles/schism/master;\
-	mv build sciclone;\
-	mkdir -p $${HOME}/.local/Modules/modulefiles/schism;\
-	cp sciclone/modulefiles/schism/master $${HOME}/.local/Modules/modulefiles/schism/
+	echo "puts stderr \"SCHISM loading from ${BRANCH} from a local compile @ ${DESTDIR}.\"" >> $${modulefile};\
+	echo '}' >> $${modulefile};\
+	echo 'if { [module-info mode load] && ![is-loaded intel/2018] } { module load intel/2018 }' >> $${modulefile};\
+	echo 'if { [module-info mode load] && ![is-loaded intel/2018-mpi] } { module load intel/2018-mpi }' >> $${modulefile};\
+	echo 'if { [module-info mode load] && ![is-loaded netcdf/4.4.1.1/intel-2018] } { module load netcdf/4.4.1.1/intel-2018 }' >> $${modulefile};\
+	echo 'if { [module-info mode load] && ![is-loaded netcdf-fortran/4.4.4/intel-2018] } { module load netcdf-fortran/4.4.4/intel-2018 }' >> $${modulefile};\
+	echo "prepend-path PATH {${DESTDIR}}" >> $${modulefile}
+
+clean:
+	rm -rf ${MAKEFILE_PARENT}build
 
 
 
