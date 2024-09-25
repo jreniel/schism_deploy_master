@@ -84,6 +84,9 @@ b) Load the SCHISM module:
 module load schism/${BRANCH}
 ```
 
+Note that loading the original modules that were used for compilation is not necessary.
+When the modulefile is created, it accounts for the presently loaded modules and adds them as dependencies to the schism/master module.
+
 If you don't have a module system, you can source the module file directly or add the SCHISM installation to your PATH manually.
 
 ## Customization

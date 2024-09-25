@@ -4,19 +4,14 @@ MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MAKEFILE_PARENT := $(dir $(MAKEFILE_PATH))
 DESTDIR ?= ${HOME}/.local/share/schism/${BRANCH}
 
+# $(info MODULESHOME: $(MODULESHOME))
 # Default compiler and MPI implementation
 CC ?= gcc
 FC ?= gfortran
 MPICC ?= mpicc
 MPIFC ?= mpif90
 
-define get_loaded_modules
-$(shell if command -v module >/dev/null 2>&1; then module list 2>&1 | grep -v "No modules loaded" | awk '{print $$2}' | paste -sd " "; else echo ""; fi)
-endef
-
-
-# Detect loaded modules
-LOADED_MODULES := $(call get_loaded_modules)
+LOADED_MODULES := $(subst :, ,$(LOADEDMODULES))
 
 # Function to set compilers based on loaded modules
 define set_compiler
@@ -89,7 +84,7 @@ build: update-cache
 	@echo "SCHISM build completed."
 
 
-install:
+install: build
 	@set -e; \
 	mkdir -p ${DESTDIR}; \
 	cp -r build/bin ${DESTDIR}/; \
@@ -97,30 +92,30 @@ install:
 
 modulefiles:
 	@set -e; \
-	prefix=$${HOME}/.local/Modules/modulefiles/schism; \
-	mkdir -p $${prefix}; \
-	modulefile=$${prefix}/${BRANCH}; \
-	echo '#%Module1.0' > $${modulefile}; \
-	echo '#' >> $${modulefile}; \
-	echo '# SCHISM ${BRANCH} tag' >> $${modulefile}; \
-	echo '#' >> $${modulefile}; \
-	echo '' >> $${modulefile}; \
-	echo 'proc ModulesHelp { } {' >> $${modulefile}; \
-	echo "puts stderr \"SCHISM loading from ${BRANCH} branch from a local compile @ ${DESTDIR}.\"" >> $${modulefile}; \
-	echo '}' >> $${modulefile}; \
-	echo "prepend-path PATH {${DESTDIR}/bin}" >> $${modulefile}; \
-	echo '' >> $${modulefile}; \
-	echo '# Load required modules' >> $${modulefile}; \
-	for module in $(LOADED_MODULES); do \
-		echo "if { [module-info mode load] && [is-loaded $$module] } {" >> $${modulefile}; \
-		echo "    module load $$module" >> $${modulefile}; \
-		echo "}" >> $${modulefile}; \
-	done; \
-	echo '' >> $${modulefile}; \
-	echo '# Set environment variables' >> $${modulefile}; \
-	echo "setenv SCHISM_ROOT ${DESTDIR}" >> $${modulefile}; \
-	echo "setenv SCHISM_BRANCH ${BRANCH}" >> $${modulefile}; \
-	echo '' >> $${modulefile};
+    prefix=$${HOME}/.local/Modules/modulefiles/schism; \
+    mkdir -p $${prefix}; \
+    modulefile=$${prefix}/${BRANCH}; \
+    echo '#%Module1.0' > $${modulefile}; \
+    echo '#' >> $${modulefile}; \
+    echo '# SCHISM ${BRANCH} tag' >> $${modulefile}; \
+    echo '#' >> $${modulefile}; \
+    echo '' >> $${modulefile}; \
+    echo 'proc ModulesHelp { } {' >> $${modulefile}; \
+    echo "puts stderr \"SCHISM loading from ${BRANCH} branch from a local compile @ ${DESTDIR}.\"" >> $${modulefile}; \
+    echo '}' >> $${modulefile}; \
+    echo "prepend-path PATH {${DESTDIR}/bin}" >> $${modulefile}; \
+    echo '' >> $${modulefile}; \
+    echo '# Load required modules' >> $${modulefile}; \
+    for module in $(LOADED_MODULES); do \
+        echo "if { ![is-loaded $$module] } {" >> $${modulefile}; \
+        echo "    module load $$module" >> $${modulefile}; \
+        echo "}" >> $${modulefile}; \
+    done; \
+    echo '' >> $${modulefile}; \
+    echo '# Set environment variables' >> $${modulefile}; \
+    echo "setenv SCHISM_ROOT ${DESTDIR}" >> $${modulefile}; \
+    echo "setenv SCHISM_BRANCH ${BRANCH}" >> $${modulefile}; \
+    echo '' >> $${modulefile};
 
 clean:
 	rm -rf ${MAKEFILE_PARENT}build
