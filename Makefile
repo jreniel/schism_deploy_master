@@ -54,7 +54,7 @@ CMAKE_ALL_OPTS = $(CMAKE_OPTS) $(CMAKE_EXTRA_OPTS)
 NPROC ?= $(shell nproc)
 
 # Cache directory for SCHISM repository
-CACHE_DIR ?= ${HOME}/.cache/schism-repo
+CACHE_DIR ?= ${MAKEFILE_PARENT}schism
 
 default: build
 
