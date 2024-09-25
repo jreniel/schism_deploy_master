@@ -159,6 +159,9 @@ This approach gives you flexibility in managing multiple SCHISM configurations w
 
    If you encounter errors related to CMake options, ensure that the options you're passing via CMAKE_EXTRA_OPTS are valid for your version of SCHISM. Refer to the SCHISM documentation for a list of available options.
 
+4. **Support for branches other than master**
+   While compilation of previous commits (or branches) could be supported, only the master branch is. This is because there are some differences in the CMake arguments which could be accounted for, but for simplicity, this just attempts to follow the master branch. This same technique however, can be used to deploy specific tags or versions. A semi-outdated example for v5.9.0 [here](https://github.com/jreniel/schism_deploy_v5.9.0).
+
 ## Support
 
 For issues related to SCHISM itself, please refer to the [official SCHISM documentation](https://schism.wiki/) or repository. For problems specific to this Makefile, consider opening an issue in the repository where this Makefile is hosted.
