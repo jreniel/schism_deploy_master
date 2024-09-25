@@ -82,8 +82,7 @@ build: update-cache
 	@echo "FC: $(FC)"
 	@echo "MPICC: $(MPICC)"
 	@echo "MPIFC: $(MPIFC)"
-	@rm -rf build
-	@mkdir build
+	@mkdir -p build
 	@cd build && \
 	cmake $(CACHE_DIR)/src $(CMAKE_ALL_OPTS) && \
 	make -j $(NPROC) --no-print-directory

@@ -110,7 +110,38 @@ You can compound multiple options in a single command:
 make CMAKE_EXTRA_OPTS="-DOLDIO=ON -DUSE_HA=ON" install
 ```
 
-**Important Note**: The compilations will compound upon each other. You can run the make command multiple times with different CMAKE_EXTRA_OPTS to generate multiple binary configurations. Each run will create a new build based on the previous one, incorporating the new options.
+**Important Note on Option Compounding:**
+
+1. **Build Directory**: The compilations will compound upon each other in the build directory. Each run of `make` with different CMAKE_EXTRA_OPTS will modify the existing build, incorporating the new options on top of the previous ones.
+
+2. **Clearing Options**: To start fresh with a new set of options, you need to run `make clean` before your new `make` command. This clears the build directory and removes all previously set options.
+
+3. **Installation Directory**: The options also compound in the installation directory, but in a different way. Each unique combination of options results in a separate binary:
+
+   - If you run `make CMAKE_EXTRA_OPTS="-DOPT1=ON" install`, you'll get `binary_OPT1` in the install directory.
+   - If you then run `make CMAKE_EXTRA_OPTS="-DOPT2=ON" install` without cleaning, you'll get `binary_OPT1_OPT2` in the install directory, and `binary_OPT1` will still be there.
+   - If you want to compile a `binary_OPT2`, version, you need to run `make clean` first, then `make CMAKE_EXTRA_OPTS="-DOPT2=ON" install`. The binaries `binary_OPT1_OPT2` and `binary_OPT1` will still remain in the installation directory, having added `binary_OPT2` alongside.
+
+4. **Multiple Configurations**: This behavior allows you to build and keep multiple binary versions with different option combinations in the same installation directory.
+
+Example workflow:
+
+```bash
+# Build with OPT1
+make CMAKE_EXTRA_OPTS="-DOPT1=ON" install
+# Results in binary_OPT1 in install directory
+
+# Add OPT2 (compounds with OPT1)
+make CMAKE_EXTRA_OPTS="-DOPT2=ON" install
+# Results in binary_OPT1_OPT2 in install directory (binary_OPT1 still exists)
+
+# Clean and build with only OPT2
+make clean
+make CMAKE_EXTRA_OPTS="-DOPT2=ON" install
+# Results in binary_OPT2 in install directory (binary_OPT1 and binary_OPT1_OPT2 still exist)
+```
+
+This approach gives you flexibility in managing multiple SCHISM configurations while keeping track of the options used for each build.
 
 ## Troubleshooting
 
